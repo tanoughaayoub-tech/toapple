@@ -1,0 +1,1856 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=3.0, user-scalable=yes, viewport-fit=cover">
+<title>ECG Patient Monitor</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ECG Monitor">
+<link rel="manifest" href="manifest.json">
+<style>
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;600;700&display=swap');
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:#000;color:#fff;font-family:'Rajdhani',sans-serif;overflow:hidden;width:100vw;height:100vh;}@media(max-height:500px){body{overflow:auto;}}
+/* iPhone safe area fix */
+.monitor{padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom);padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right);}
+.welcome{padding-top:env(safe-area-inset-top);}
+
+/* WELCOME */
+.welcome{width:100vw;min-height:100dvh;background:radial-gradient(ellipse at 30% 50%, #071428 0%, #020810 70%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:clamp(8px,2vh,16px);position:relative;overflow-y:auto;padding-bottom:20px;}
+.welcome::before{content:'';position:absolute;top:0;left:0;right:0;bottom:0;background:repeating-linear-gradient(0deg,transparent,transparent 40px,rgba(0,180,80,0.015) 40px,rgba(0,180,80,0.015) 41px),repeating-linear-gradient(90deg,transparent,transparent 40px,rgba(0,180,80,0.015) 40px,rgba(0,180,80,0.015) 41px);pointer-events:none;}
+.w-logos{display:flex;justify-content:center;align-items:center;gap:28px;width:100%;padding:0 32px;position:absolute;top:28px;}
+.w-logo{font-size:1.9rem;font-weight:700;color:#00cc66;line-height:1.1;text-transform:uppercase;letter-spacing:3px;text-shadow:0 0 20px rgba(0,204,102,0.4);}
+.w-logo span{display:block;font-size:1.1rem;letter-spacing:6px;color:#00aa55;font-weight:600;}
+.w-divider{width:2px;height:80px;background:linear-gradient(to bottom,transparent,#1a4a2a,transparent);}
+.w-badge-wrap{display:flex;flex-direction:column;align-items:center;gap:6px;}
+.w-badge-wrap img{width:88px;height:88px;object-fit:contain;filter:drop-shadow(0 0 12px rgba(42,106,176,0.6));}
+.w-badge{width:68px;height:68px;background:#1a3a5c;border:3px solid #2a6ab0;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.6rem;}
+.w-title{font-size:1.6rem;font-weight:700;color:#e8e8e8;text-align:center;letter-spacing:2px;margin-top:0;text-transform:uppercase;}
+.w-title-line{width:120px;height:2px;background:linear-gradient(to right,transparent,#00cc66,transparent);margin:6px auto 0;}
+.w-sub{font-size:0.8rem;color:#5a7f98;text-align:center;letter-spacing:3px;text-transform:uppercase;margin-top:4px;}
+.w-btns{display:flex;flex-direction:column;gap:10px;width:100%;max-width:320px;padding:0 22px;margin-top:12px;}
+.btn{padding:clamp(9px,2vh,12px) 20px;border:none;border-radius:8px;font-family:'Rajdhani',sans-serif;font-size:clamp(0.85rem,2.5vw,0.98rem);font-weight:700;cursor:pointer;letter-spacing:1px;transition:all 0.2s;text-transform:uppercase;}
+.btn:active{transform:scale(0.97);}
+.btn-g{background:#00cc66;color:#000;}.btn-g:hover{background:#00ff7f;}
+.btn-b{background:#1a6ab0;color:#fff;border:2px solid #2a8ae0;}.btn-b:hover{background:#2a7acc;}
+.btn-r{background:#8b1a1a;color:#fff;border:2px solid #cc2222;}.btn-r:hover{background:#aa2222;}
+.btn-gr{background:#2a2a2a;color:#aaa;border:1px solid #444;}
+.btn-cpr{background:linear-gradient(135deg,#4a0000,#8b0000);color:#ff6666;border:2px solid #cc0000;box-shadow:0 0 12px rgba(200,0,0,0.3);}
+.btn-cpr:hover{background:linear-gradient(135deg,#6a0000,#aa0000);box-shadow:0 0 20px rgba(200,0,0,0.5);}
+.btn-drug{background:linear-gradient(135deg,#0a2a4a,#1a4a7a);color:#88ccff;border:2px solid #2a6ab0;box-shadow:0 0 12px rgba(42,106,176,0.3);}
+.btn-drug:hover{background:linear-gradient(135deg,#1a3a5a,#2a5a8a);}
+.btn-home{background:#1a2a1a;color:#00cc66;border:1px solid #2a4a2a;font-size:0.78rem;padding:6px 10px;border-radius:5px;cursor:pointer;font-family:'Rajdhani',sans-serif;font-weight:600;letter-spacing:1px;transition:all 0.15s;}
+.btn-home:hover{background:#2a3a2a;}
+.join-panel{width:100%;max-width:320px;padding:0 22px;display:flex;flex-direction:column;gap:8px;}
+.inp{width:100%;padding:10px 14px;background:#0d1f33;border:2px solid #2a6ab0;border-radius:8px;color:#fff;font-family:'Share Tech Mono',monospace;font-size:1.5rem;text-align:center;letter-spacing:10px;outline:none;}
+.inp:focus{border-color:#00bfff;}
+.err{color:#ff4444;font-size:0.85rem;text-align:center;min-height:16px;}
+.inf{color:#6a8fa8;font-size:0.8rem;text-align:center;}
+.disc{position:absolute;bottom:14px;font-size:0.72rem;color:#2a4a3a;text-align:center;letter-spacing:2px;text-transform:uppercase;font-weight:600;}
+
+/* MONITOR */
+.monitor{width:100vw;height:100dvh;background:#000;display:flex;flex-direction:row;box-sizing:border-box;overflow:hidden;}
+.vals{width:clamp(90px,12vw,145px);min-width:80px;display:flex;flex-direction:column;border-right:1px solid #1a1a1a;overflow:hidden;}
+.vcell{flex:1;display:flex;flex-direction:column;justify-content:flex-start;padding:6px 9px;border-bottom:1px solid #111;}
+.vlbl{font-size:clamp(0.55rem,1.2vw,0.75rem);font-weight:700;letter-spacing:2px;text-transform:uppercase;opacity:0.9;}
+.vnum{font-family:'Share Tech Mono',monospace;font-size:clamp(1.4rem,3.5vw,2.5rem);font-weight:700;line-height:1;margin-top:3px;}
+.vsub{font-size:clamp(0.55rem,1.2vw,0.75rem);opacity:0.65;margin-top:2px;font-family:'Share Tech Mono',monospace;font-weight:600;}
+.strips{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0;max-width:calc(100vw - 145px - 155px);}
+.strip{flex:1;position:relative;border-bottom:1px solid #111;overflow:hidden;min-height:0;}
+.strip canvas{position:absolute;top:0;left:0;width:100%;height:100%;}
+.slbl{position:absolute;top:5px;right:10px;font-size:0.7rem;font-weight:700;letter-spacing:2px;opacity:0.75;text-transform:uppercase;font-family:'Rajdhani',sans-serif;}
+.ctrls{width:clamp(120px,16vw,155px);min-width:110px;background:#0a1628;display:flex;flex-direction:column;border-left:1px solid #1a2a3a;overflow-y:scroll;padding:5px 5px 60px 5px;gap:4px;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;}
+.csec{display:flex;flex-direction:column;gap:3px;}
+.ctitle{font-size:0.88rem;font-weight:700;text-align:center;letter-spacing:2px;padding:2px 0;text-transform:uppercase;}
+.cbtn{width:100%;padding:8px 7px;border:1px solid #2a3a4a;border-radius:5px;background:#0d2035;color:#bbb;font-family:'Rajdhani',sans-serif;font-size:0.9rem;font-weight:700;cursor:pointer;letter-spacing:1px;transition:all 0.15s;text-align:center;}
+.cbtn:hover{background:#1a3a55;color:#fff;}
+.cbtn.on{background:#1a4a2a;border-color:#00cc66;color:#00ff7f;}
+.cbtn.ora{background:#3a2a0a;border-color:#ff8800;color:#ffaa00;}
+.cbtn.sel{background:#1a3a4a;border-color:#00bfff;color:#00bfff;}
+.cdiv{height:1px;background:#1a2a3a;margin:1px 0;}
+.defib-panel{background:#1a0000;border:2px solid #cc0000;border-radius:8px;padding:6px;display:flex;flex-direction:column;gap:4px;}
+.defib-title{color:#ff4444;font-size:0.82rem;font-weight:700;text-align:center;letter-spacing:2px;text-transform:uppercase;}
+.defib-joules{display:flex;gap:3px;}
+.defib-j-btn{flex:1;padding:8px 2px;border:1px solid #cc0000;border-radius:4px;background:#2a0000;color:#ff6666;font-family:'Rajdhani',sans-serif;font-size:0.88rem;font-weight:700;cursor:pointer;text-align:center;transition:all 0.15s;}
+.defib-j-btn.sel{background:#cc0000;color:#fff;border-color:#ff4444;}
+.defib-j-btn:hover{background:#3a0000;}
+.shock-btn{width:100%;padding:11px;border:2px solid #ff4444;border-radius:6px;font-family:'Rajdhani',sans-serif;font-size:0.95rem;font-weight:700;cursor:pointer;letter-spacing:2px;text-transform:uppercase;transition:all 0.2s;}
+.shock-btn.charging{background:#3a1a00;border-color:#ff8800;color:#ff8800;animation:flash 0.3s infinite;}
+.shock-btn.ready{background:#cc0000;border-color:#ff4444;color:#fff;box-shadow:0 0 15px rgba(255,0,0,0.5);animation:flash 0.5s infinite;}
+.shock-btn.idle{background:#1a0000;color:#660000;}
+.airway-btn{width:100%;padding:5px 7px;border:1px solid #2a5a3a;border-radius:5px;background:#0a1a0a;color:#88cc88;font-family:'Rajdhani',sans-serif;font-size:0.78rem;font-weight:700;cursor:pointer;letter-spacing:1px;transition:all 0.15s;text-align:center;}
+.airway-btn:hover{background:#1a3a1a;color:#aaffaa;}
+.airway-btn.done{background:#1a4a1a;border-color:#00cc66;color:#00ff7f;}
+.etco2-quality{display:flex;gap:3px;margin-top:2px;}
+.eq-btn{flex:1;padding:4px 2px;border:1px solid #2a4a2a;border-radius:4px;background:#0a1a0a;color:#aaa;font-family:'Rajdhani',sans-serif;font-size:0.72rem;font-weight:700;cursor:pointer;text-align:center;}
+.eq-btn.on{background:#1a5a1a;border-color:#00cc66;color:#00ff7f;}
+.rinfo{background:#0d1f10;border:1px solid #1a4a1a;border-radius:6px;padding:4px 7px;text-align:center;}
+.rcode{font-family:'Share Tech Mono',monospace;font-size:1.3rem;color:#00ff7f;letter-spacing:6px;}
+.rrole{font-size:0.6rem;color:#6a8a6a;letter-spacing:1px;text-transform:uppercase;}
+.clk{font-family:'Share Tech Mono',monospace;font-size:0.76rem;color:#6a8a6a;text-align:right;padding:1px 3px;}
+.nnext{font-size:0.6rem;color:#6a8a8a;text-align:center;font-family:'Share Tech Mono',monospace;}
+@keyframes flash{0%,100%{opacity:1}50%{opacity:0.08}}
+.alarm{animation:flash 0.5s infinite;}
+.ec{color:#00ff7f;}.sc{color:#00bfff;}.bc{color:#ff4444;}.xc{color:#ffd700;}.rc{color:#fff;}
+.topbar{display:flex;justify-content:space-between;align-items:center;padding:2px 5px;}
+@media screen and (orientation:portrait) and (max-width:768px){
+.rh{display:flex;position:fixed;top:0;left:0;width:100vw;height:100vh;background:#000;z-index:9999;align-items:center;justify-content:center;flex-direction:column;gap:16px;font-size:1.2rem;color:#00ff7f;text-align:center;padding:32px;}}
+@media screen and (orientation:landscape),screen and (min-width:769px){.rh{display:none;}}
+</style>
+<meta name="theme-color" content="#000000">
+
+</head>
+<body>
+<div class="rh">📱 Please rotate your device to landscape mode</div>
+<div id="root"></div>
+<script type="text/babel">
+const {useState,useEffect,useRef,useCallback}=React;
+const FB="https://ecg-ayoub-default-rtdb.firebaseio.com";
+async function fw(room,data){try{await fetch(`${FB}/rooms/${room}.json`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});}catch(e){}}
+async function fr(room){try{const r=await fetch(`${FB}/rooms/${room}.json`);return await r.json();}catch(e){return null;}}
+async function fc(room){try{const r=await fetch(`${FB}/rooms/${room}.json`);const d=await r.json();return d!==null;}catch(e){return false;}}
+
+// ── Waveform generators ─────────────────────────────
+function ecgSample(t,rhythm,hr){
+  const cl=60/Math.max(hr,1);
+  if(rhythm==='Asystole') return 0.5+(Math.random()-0.5)*0.008;
+  if(rhythm==='VFib') return 0.5+Math.sin(t*19.3*Math.PI*2)*0.14+Math.sin(t*23.7*Math.PI*2)*0.09+Math.sin(t*13.1*Math.PI*2)*0.07;
+  if(rhythm==='VTach'){
+    const tc=(t%cl)/cl;
+    // Monomorphic VT — smooth sinusoidal wide complex matching classic ECG paper
+    // Tall rounded peaks, deep rounded troughs, slight asymmetry upstroke vs downstroke
+    const phase = tc * Math.PI * 2;
+    // Asymmetric sine: faster upstroke, slower descent — classic VT morphology
+    const asymm = Math.sin(phase - 0.3);
+    // Add slight notching on the downstroke
+    const notch = tc>0.55&&tc<0.70 ? -0.05*Math.sin((tc-0.55)/0.15*Math.PI) : 0;
+    const v = asymm*0.40 + notch;
+    return Math.max(0.04,Math.min(0.96,0.50+v));
+  }
+  const tc=(t%cl)/cl,amp=rhythm==='PEA'?0.3:1.0;
+  let v=0;
+  if(tc>=0.05&&tc<=0.14) v=0.12*Math.sin((tc-0.05)/0.09*Math.PI);
+  else if(tc>=0.22&&tc<0.26) v=-0.08*Math.sin((tc-0.22)/0.04*Math.PI);
+  else if(tc>=0.26&&tc<0.30) v=amp*Math.sin((tc-0.26)/0.04*Math.PI);
+  else if(tc>=0.30&&tc<=0.35) v=-0.15*amp*Math.sin((tc-0.30)/0.05*Math.PI);
+  else if(tc>=0.40&&tc<=0.65) v=0.18*amp*Math.sin((tc-0.40)/0.25*Math.PI);
+  return Math.max(0.05,Math.min(0.95,0.5+v));
+}
+
+function spo2Sample(t,hr,pi){
+  const cl=60/Math.max(hr,1),tc=(t%cl)/cl;
+  let v=tc<0.15?Math.pow(Math.sin(tc/0.15*Math.PI/2),2):tc<0.25?1-(tc-0.15)/0.10*0.15:tc<0.35?0.85+Math.sin((tc-0.25)/0.10*Math.PI)*0.05:Math.max(0,0.85*Math.exp(-(tc-0.35)*4));
+  return Math.max(0.05,Math.min(0.95,0.15+v*pi*0.75));
+}
+
+// ── CPR compression artifact on ECG ────────────────
+function cprECGSample(t, compressionRate){
+  const cl = 60/Math.max(compressionRate,1);
+  const tc = (t%cl)/cl;
+  // Realistic CPR: slow rise (compression down), peak, slow fall (recoil), baseline
+  // Matches real CPR artifact — broad sinusoidal with sharp recoil notch
+  if(tc < 0.35){
+    // Compression phase — broad push down
+    const x = tc/0.35;
+    return 0.5 + Math.pow(Math.sin(x*Math.PI),1.2)*0.42;
+  } else if(tc < 0.42){
+    // Recoil notch — sharp dip
+    const x = (tc-0.35)/0.07;
+    return 0.5 - Math.sin(x*Math.PI)*0.22;
+  } else if(tc < 0.55){
+    // Secondary bounce
+    const x = (tc-0.42)/0.13;
+    return 0.5 + Math.sin(x*Math.PI)*0.10;
+  } else {
+    // Baseline with fine noise
+    return 0.5 + (Math.random()-0.5)*0.025;
+  }
+}
+
+// ── ETCO2 during CPR — 30:2 cycle ─────────────────
+// Full CPR cycle: 30 compressions (~18s at 100/min) then 2 breaths (~4s)
+// ETCO2 flat during compressions, 2 waveforms during ventilation, then flat again
+function cprETCO2Sample(t, rr, etco2Quality){
+  const val = 4 + etco2Quality*26;
+  const maxH = Math.min(0.75, val/60);
+  const cycleDur = 22; // ~18s compressions + 4s ventilation
+  const tc = t % cycleDur;
+
+  // First 18s = compressions — flat baseline with tiny artifact
+  if(tc < 18){
+    return 0.08 + (Math.random()-0.5)*0.01;
+  }
+
+  // Last 4s = 2 breaths
+  // Each breath takes 2s: 0.5s rise, 0.8s plateau, 0.5s sharp drop, 0.2s baseline
+  const bt = tc - 18; // 0-4s ventilation window
+  const breathPos = bt % 2; // position within each breath cycle
+
+  if(breathPos < 0.40){
+    const x = breathPos/0.40;
+    return 0.08 + (maxH-0.08)*(1-Math.pow(1-x,1.8));  // rise
+  } else if(breathPos < 0.90){
+    return maxH + (breathPos-0.40)*0.02;                // plateau
+  } else if(breathPos < 1.15){
+    const x = (breathPos-0.90)/0.25;
+    return (maxH+0.01)-(maxH+0.01-0.08)*Math.pow(x,0.3); // sharp drop
+  } else {
+    return 0.08;                                         // flat baseline between breaths
+  }
+}
+
+// ── BVM breath on SPO2 strip ────────────────────────
+function bvmSPO2Sample(t, comprRate, pi){
+  // During CPR: pleth is driven by chest compressions, NOT breath rate
+  // Each compression produces a small pulsatile waveform — low amplitude
+  // Waveform varies with ventilation (amplitude rises during breath)
+  const cl=60/Math.max(comprRate,1), tc=(t%cl)/cl;
+  // Small compression-driven pulse — narrow, low amplitude
+  let v=0;
+  if(tc<0.15)      v=Math.pow(Math.sin(tc/0.15*Math.PI),1.4)*0.7;  // compression upstroke
+  else if(tc<0.28) v=0.7*(1-(tc-0.15)/0.13);                        // downstroke
+  else if(tc<0.38) v=-0.15*Math.sin((tc-0.28)/0.10*Math.PI);        // dicrotic notch
+  else             v=0;                                               // baseline
+  // pi controls amplitude (poor perfusion = low amplitude)
+  return Math.max(0.05,Math.min(0.95,0.30+v*pi*0.65));
+}
+
+function etco2Sample(t,rr,val){
+  const cl=60/Math.max(rr,1),tc=(t%cl)/cl,maxH=Math.min(0.88,val/65);
+  let v=0.08;
+  // Phase I — inspiratory baseline (flat near zero)
+  if(tc<0.10) v=0.08;
+  // Phase II — sharp expiratory upstroke
+  else if(tc<0.20){
+    const x=(tc-0.10)/0.10;
+    v=0.08+(maxH-0.08)*(1-Math.pow(1-x,2.0));
+  }
+  // Phase III — alveolar plateau (slight upslope)
+  else if(tc<0.52) v=maxH+(tc-0.20)*0.025;
+  // Phase 0 — very sharp inspiratory downstroke (real capnograph is near-vertical)
+  else if(tc<0.60){
+    const x=(tc-0.52)/0.08;
+    // Steep drop — cubic ease in makes it near-vertical at start
+    v=(maxH+0.012)-(maxH+0.012-0.08)*Math.pow(x,0.35);
+  }
+  // Back to flat baseline quickly
+  else v=0.08;
+  return Math.max(0.05,Math.min(0.95,v));
+}
+
+// ── Audio engine ───────────────────────────────────
+class AudioEngine {
+  constructor(){
+    this.ctx=null;this.flatlineNode=null;this.flatlinePlaying=false;this.muted=false;
+    this.nibpNode=null;this.nibpPlaying=false;
+  }
+  init(){
+    if(!this.ctx) this.ctx=new(window.AudioContext||window.webkitAudioContext)();
+  }
+  beep(pitch=1.0){
+    if(this.muted||!this.ctx)return;
+    const o=this.ctx.createOscillator();
+    const g=this.ctx.createGain();
+    o.connect(g);g.connect(this.ctx.destination);
+    o.frequency.value=880*pitch;o.type='sine';
+    g.gain.setValueAtTime(0,this.ctx.currentTime);
+    g.gain.linearRampToValueAtTime(0.4,this.ctx.currentTime+0.01);
+    g.gain.exponentialRampToValueAtTime(0.001,this.ctx.currentTime+0.12);
+    o.start(this.ctx.currentTime);o.stop(this.ctx.currentTime+0.15);
+  }
+  startFlatline(){
+    if(this.muted||!this.ctx||this.flatlinePlaying)return;
+    this.flatlinePlaying=true;
+    const o=this.ctx.createOscillator();
+    const g=this.ctx.createGain();
+    o.connect(g);g.connect(this.ctx.destination);
+    o.frequency.value=440;o.type='sine';
+    g.gain.value=0.35;
+    o.start();
+    this.flatlineNode={osc:o,gain:g};
+  }
+  stopFlatline(){
+    if(!this.flatlinePlaying||!this.flatlineNode)return;
+    try{this.flatlineNode.osc.stop();}catch(e){}
+    this.flatlinePlaying=false;this.flatlineNode=null;
+  }
+  // NIBP sound: motorized pump inflation then deflation
+  startNIBP(){
+    if(this.muted||!this.ctx||this.nibpPlaying)return;
+    this.nibpPlaying=true;
+    const ctx=this.ctx;
+    const t=ctx.currentTime;
+    const totalDur=4.0; // matches the 4s measurement delay
+
+    // --- Inflation phase (0 - 1.8s): rising buzz like a pump motor ---
+    const inflateOsc=ctx.createOscillator();
+    const inflateGain=ctx.createGain();
+    const inflateFilter=ctx.createBiquadFilter();
+    inflateOsc.type='sawtooth';
+    inflateOsc.frequency.setValueAtTime(60,t);
+    inflateOsc.frequency.linearRampToValueAtTime(120,t+1.8); // pitch rises as pressure builds
+    inflateFilter.type='lowpass';
+    inflateFilter.frequency.value=400;
+    inflateOsc.connect(inflateFilter);
+    inflateFilter.connect(inflateGain);
+    inflateGain.connect(ctx.destination);
+    inflateGain.gain.setValueAtTime(0,t);
+    inflateGain.gain.linearRampToValueAtTime(0.07,t+0.1);
+    inflateGain.gain.setValueAtTime(0.07,t+1.7);
+    inflateGain.gain.linearRampToValueAtTime(0,t+1.9);
+    inflateOsc.start(t);
+    inflateOsc.stop(t+1.9);
+
+    // --- Brief silence 1.8-2.0s (pressure held) ---
+
+    // --- Deflation phase (2.0 - 3.8s): slower controlled hiss ---
+    const deflateNoise=ctx.createOscillator();
+    const deflateGain=ctx.createGain();
+    const deflateFilter=ctx.createBiquadFilter();
+    deflateNoise.type='sawtooth';
+    deflateNoise.frequency.setValueAtTime(110,t+2.0);
+    deflateNoise.frequency.linearRampToValueAtTime(55,t+3.8); // pitch drops as pressure releases
+    deflateFilter.type='bandpass';
+    deflateFilter.frequency.value=300;
+    deflateFilter.Q.value=0.8;
+    deflateNoise.connect(deflateFilter);
+    deflateFilter.connect(deflateGain);
+    deflateGain.connect(ctx.destination);
+    deflateGain.gain.setValueAtTime(0,t+1.9);
+    deflateGain.gain.linearRampToValueAtTime(0.05,t+2.1);
+    deflateGain.gain.setValueAtTime(0.04,t+3.7);
+    deflateGain.gain.linearRampToValueAtTime(0,t+3.9);
+    deflateNoise.start(t+1.9);
+    deflateNoise.stop(t+4.0);
+
+    // --- Final beep: reading complete ---
+    const doneOsc=ctx.createOscillator();
+    const doneGain=ctx.createGain();
+    doneOsc.type='sine';
+    doneOsc.frequency.value=1050;
+    doneOsc.connect(doneGain);
+    doneGain.connect(ctx.destination);
+    doneGain.gain.setValueAtTime(0,t+3.85);
+    doneGain.gain.linearRampToValueAtTime(0.12,t+3.90);
+    doneGain.gain.exponentialRampToValueAtTime(0.001,t+4.15);
+    doneOsc.start(t+3.85);
+    doneOsc.stop(t+4.2);
+
+    // Reset flag after done
+    setTimeout(()=>{this.nibpPlaying=false;},4200);
+  }
+  setMuted(m){
+    this.muted=m;
+    if(m)this.stopFlatline();
+  }
+
+  // Defib charging sound — rising whine
+  startCharge(joules, onComplete){
+    if(!this.ctx) return;
+    const ctx=this.ctx;
+    const duration = joules===200?2.0:joules===300?2.8:3.5;
+    const t=ctx.currentTime;
+
+    // Rising whine oscillator
+    const osc=ctx.createOscillator();
+    const gain=ctx.createGain();
+    const filter=ctx.createBiquadFilter();
+    osc.type='sawtooth';
+    osc.frequency.setValueAtTime(200,t);
+    osc.frequency.exponentialRampToValueAtTime(2200,t+duration);
+    filter.type='bandpass';
+    filter.frequency.value=1000;
+    filter.Q.value=0.5;
+    osc.connect(filter);filter.connect(gain);gain.connect(ctx.destination);
+    gain.gain.setValueAtTime(0,t);
+    gain.gain.linearRampToValueAtTime(0.25,t+0.1);
+    gain.gain.setValueAtTime(0.25,t+duration-0.1);
+    gain.gain.linearRampToValueAtTime(0,t+duration);
+    osc.start(t);osc.stop(t+duration);
+
+    // Ready beep at end
+    const beep=ctx.createOscillator();
+    const bg=ctx.createGain();
+    beep.type='sine';beep.frequency.value=1800;
+    beep.connect(bg);bg.connect(ctx.destination);
+    bg.gain.setValueAtTime(0,t+duration);
+    bg.gain.linearRampToValueAtTime(0.4,t+duration+0.05);
+    bg.gain.exponentialRampToValueAtTime(0.001,t+duration+0.4);
+    beep.start(t+duration);beep.stop(t+duration+0.5);
+
+    this.chargeTimer=setTimeout(onComplete, duration*1000);
+  }
+
+  stopCharge(){
+    if(this.chargeTimer) clearTimeout(this.chargeTimer);
+  }
+
+  // Shock delivery — loud thud
+  shock(){
+    if(!this.ctx) return;
+    const ctx=this.ctx;
+    const t=ctx.currentTime;
+
+    // Low thud
+    const buf=ctx.createBuffer(1,ctx.sampleRate*0.3,ctx.sampleRate);
+    const data=buf.getChannelData(0);
+    for(let i=0;i<data.length;i++){
+      data[i]=(Math.random()*2-1)*Math.exp(-i/(ctx.sampleRate*0.08));
+    }
+    const src=ctx.createBufferSource();
+    const gain=ctx.createGain();
+    const filter=ctx.createBiquadFilter();
+    filter.type='lowpass';filter.frequency.value=200;
+    src.buffer=buf;
+    src.connect(filter);filter.connect(gain);gain.connect(ctx.destination);
+    gain.gain.value=1.5;
+    src.start(t);
+
+    // High crack
+    const osc=ctx.createOscillator();
+    const og=ctx.createGain();
+    osc.type='square';osc.frequency.value=80;
+    osc.connect(og);og.connect(ctx.destination);
+    og.gain.setValueAtTime(0.6,t);
+    og.gain.exponentialRampToValueAtTime(0.001,t+0.15);
+    osc.start(t);osc.stop(t+0.2);
+  }
+}
+const audio=new AudioEngine();
+
+// ── Canvas waveform — transition from last point ───
+function WaveCanvas({gen,color,label,lineWidth=2}){
+  const ref=useRef(),tR=useRef(0),aR=useRef(),lR=useRef();
+  const buf=useRef([]);        // the live display buffer
+  const genRef=useRef(gen);
+  const prevGenRef=useRef(gen);
+  // switchAt: the buffer index where the new rhythm "takes over"
+  // points to the right of switchAt show new gen, left show old
+  const switchAt=useRef(-1);
+  const N=380;
+
+  useEffect(()=>{
+    if(prevGenRef.current!==gen){
+      // Switch happens at the current write head (rightmost point)
+      // New rhythm will grow from the right edge forward
+      switchAt.current=buf.current.length-1;
+      prevGenRef.current=gen;
+    }
+    genRef.current=gen;
+  },[gen]);
+
+  useEffect(()=>{
+    const c=ref.current;if(!c)return;
+    const ctx=c.getContext('2d');
+    buf.current=new Array(N).fill(0.5);
+    const resize=()=>{c.width=c.offsetWidth;c.height=c.offsetHeight;};
+    resize();
+    const ro=new ResizeObserver(resize);ro.observe(c);
+
+    function frame(ts){
+      if(!lR.current)lR.current=ts;
+      const dt=Math.min((ts-lR.current)/1000,0.05);lR.current=ts;
+      tR.current+=dt;
+
+      // Push new sample — always from current generator
+      buf.current.push(genRef.current(tR.current));
+      if(buf.current.length>N)buf.current.shift();
+
+      // Move switchAt left as buffer scrolls
+      if(switchAt.current>0) switchAt.current--;
+
+      const W=c.width,H=c.height;
+      ctx.clearRect(0,0,W,H);
+
+      // Grid
+      ctx.strokeStyle='rgba(255,70,70,0.06)';ctx.lineWidth=0.5;
+      for(let i=0;i<=10;i++){ctx.beginPath();ctx.moveTo(i*W/10,0);ctx.lineTo(i*W/10,H);ctx.stroke();}
+      for(let i=0;i<=4;i++){ctx.beginPath();ctx.moveTo(0,i*H/4);ctx.lineTo(W,i*H/4);ctx.stroke();}
+
+      // Draw the single continuous line
+      // Points before switchAt were drawn with old gen (already in buffer — no change needed)
+      // Points after switchAt are from new gen
+      // Result: line continues seamlessly, new rhythm grows in from the right
+      ctx.beginPath();
+      ctx.strokeStyle=color;ctx.lineWidth=lineWidth;
+      ctx.shadowColor=color;ctx.shadowBlur=5;
+      ctx.lineJoin='round';ctx.lineCap='round';
+      const b=buf.current;
+      for(let i=0;i<b.length;i++){
+        const x=(i/(b.length-1))*W;
+        const y=H-b[i]*H*0.82-H*0.09;
+        i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+      }
+      ctx.stroke();ctx.shadowBlur=0;
+
+      aR.current=requestAnimationFrame(frame);
+    }
+    aR.current=requestAnimationFrame(frame);
+    return()=>{cancelAnimationFrame(aR.current);ro.disconnect();};
+  },[color,lineWidth]);
+
+  return(
+    <div className="strip">
+      <canvas ref={ref}/>
+      <span className="slbl" style={{color,textShadow:`0 0 8px ${color}`}}>{label}</span>
+    </div>
+  );
+}function Clock(){
+  const [t,setT]=useState('');
+  useEffect(()=>{const tick=()=>setT(new Date().toTimeString().slice(0,8));tick();const id=setInterval(tick,1000);return()=>clearInterval(id);},[]);
+  return <div className="clk">{t}</div>;
+}
+
+// ── Welcome Screen ─────────────────────────────────
+function Welcome({onStart}){
+  const [phase,setPhase]=useState('main');
+  const [code,setCode]=useState('');
+  const [err,setErr]=useState('');
+  const [chk,setChk]=useState(false);
+
+  async function join(){
+    if(code.length!==4){setErr('Please enter a valid 4-digit code');return;}
+    setChk(true);setErr('Checking room...');
+    const ok=await fc(code);setChk(false);
+    ok?onStart({mode:'student',roomCode:code}):setErr('❌ Room not found. Check your code.');
+  }
+
+  // Detect iOS
+  const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
+  const isStandalone = window.navigator.standalone === true;
+  const [showIOSGuide, setShowIOSGuide] = React.useState(isIOS && !isStandalone);
+
+  return(
+    <div className="welcome">
+      {/* iOS Add to Home Screen — mandatory for fullscreen */}
+      {showIOSGuide && (
+        <div style={{
+          position:'fixed',top:0,left:0,width:'100vw',height:'100svh',
+          background:'#020e1a',zIndex:10000,
+          display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',
+          padding:'28px',gap:'0px'
+        }}>
+          {/* Logo */}
+          <div style={{fontSize:'3rem',marginBottom:'12px'}}>📱</div>
+
+          {/* Main message */}
+          <div style={{fontSize:'1.4rem',fontWeight:700,color:'#00ff7f',letterSpacing:'2px',textTransform:'uppercase',textAlign:'center',lineHeight:1.2,marginBottom:'6px'}}>
+            Before You Start
+          </div>
+          <div style={{fontSize:'0.82rem',color:'#5a8fa8',letterSpacing:'1px',textAlign:'center',marginBottom:'28px',lineHeight:1.6,maxWidth:'300px'}}>
+            For the best experience on iPhone & iPad, add this app to your Home Screen first
+          </div>
+
+          {/* Steps */}
+          {[
+            {num:'1', emoji:'⬆️', title:'Tap the Share button', sub:'The box with an arrow at the bottom of Safari'},
+            {num:'2', emoji:'➕', title:'Tap "Add to Home Screen"', sub:'Scroll down in the share menu if needed'},
+            {num:'3', emoji:'✔️', title:'Tap "Add"', sub:'Top right corner to confirm'},
+            {num:'4', emoji:'🚀', title:'Open from your Home Screen', sub:'The app will launch in true fullscreen'},
+          ].map((s,i)=>(
+            <div key={i} style={{
+              display:'flex',alignItems:'center',gap:'12px',
+              width:'100%',maxWidth:'320px',marginBottom:'10px',
+              background:'rgba(0,150,70,0.07)',
+              border:'1px solid rgba(0,200,80,0.15)',
+              borderRadius:'12px',padding:'11px 14px'
+            }}>
+              <div style={{
+                width:'28px',height:'28px',borderRadius:'50%',flexShrink:0,
+                background:'rgba(0,180,80,0.15)',border:'1px solid #00aa55',
+                display:'flex',alignItems:'center',justifyContent:'center',
+                fontSize:'0.8rem',fontWeight:700,color:'#00ff7f'
+              }}>{s.num}</div>
+              <div style={{fontSize:'1.2rem',flexShrink:0}}>{s.emoji}</div>
+              <div>
+                <div style={{fontSize:'0.88rem',color:'#d0ecd0',fontWeight:700,letterSpacing:'0.5px'}}>{s.title}</div>
+                <div style={{fontSize:'0.72rem',color:'#4a7a6a',marginTop:'1px'}}>{s.sub}</div>
+              </div>
+            </div>
+          ))}
+
+          {/* Bottom arrow hint */}
+          <div style={{marginTop:'14px',textAlign:'center'}}>
+            <div style={{fontSize:'0.65rem',color:'#2a5a4a',letterSpacing:'2px',textTransform:'uppercase',marginBottom:'4px'}}>Share button is here</div>
+            <div style={{fontSize:'1.8rem',animation:'pulse 1.5s infinite'}}>⬇️</div>
+          </div>
+        </div>
+      )}
+      
+      <div className="w-title">Patient Monitor Simulator<div className="w-title-line"/></div>
+      <div className="w-sub">Select one option to start</div>
+      {phase==='main'&&(
+        <div className="w-btns">
+          <button className="btn btn-g" onClick={()=>{audio.init();onStart({mode:'solo',roomCode:''});}}>▶ Start Simulation</button>
+          <button className="btn btn-b" onClick={()=>{audio.init();onStart({mode:'instructor',roomCode:String(Math.floor(1000+Math.random()*9000))});}}>📡 Start Room — Instructor</button>
+          <button className="btn btn-r" onClick={()=>setPhase('join')}>🎓 Join Room — Student</button>
+          <button className="btn btn-cpr" onClick={()=>{audio.init();onStart({mode:'cpr',roomCode:String(Math.floor(1000+Math.random()*9000))});}}>🫀 CPR / Resuscitation</button>
+          <button className="btn btn-drug" onClick={()=>onStart({mode:'drug'})}>💊 Drug Dose Calculator</button>
+        </div>
+      )}
+      {phase==='join'&&(
+        <div className="join-panel">
+          <div className="inf">Enter the 4-digit room code from your instructor</div>
+          <input className="inp" type="number" placeholder="0000" value={code} onChange={e=>{setCode(e.target.value.slice(0,4));setErr('');}}/>
+          <div className="err">{err}</div>
+          <button className="btn btn-g" onClick={join} disabled={chk}>{chk?'Checking...':'Join Room'}</button>
+          <button className="btn btn-gr" onClick={()=>{setPhase('main');setCode('');setErr('');}}>← Back</button>
+        </div>
+      )}
+      <div className="disc">By Ayoub TANOUGHA</div>
+
+    </div>
+  );
+}
+
+// ── Monitor ─────────────────────────────────────────
+// ── CPR Student View ────────────────────────────────
+function CPRStudentView({data, roomCode, onHome}){
+  const [shockTimer,setShockTimer] = useState(0);
+  const [timerRunning,setTimerRunning] = useState(false);
+  const [lastShockCount,setLastShockCount] = useState(0);
+  const [studentJoules,setStudentJoules] = useState(200);
+  const [studentDefibState,setStudentDefibState] = useState('idle');
+  const [studentShockCount,setStudentShockCount] = useState(0);
+
+  // Start timer when shock delivered
+  useEffect(()=>{
+    if(data.shockCount > lastShockCount){
+      setLastShockCount(data.shockCount);
+      setShockTimer(0);
+      setTimerRunning(true);
+    }
+  },[data.shockCount]);
+
+  // Count up timer after shock
+  useEffect(()=>{
+    if(!timerRunning) return;
+    const id=setInterval(()=>setShockTimer(v=>v+1),1000);
+    return()=>clearInterval(id);
+  },[timerRunning]);
+
+  function handleStudentCharge(){
+    if(studentDefibState!=='idle') return;
+    audio.init(); // ensure audio context active
+    setStudentDefibState('charging');
+    audio.startCharge(studentJoules,()=>setStudentDefibState('ready'));
+  }
+  function handleStudentShock(){
+    if(studentDefibState!=='ready') return;
+    audio.shock();
+    setStudentDefibState('idle');
+    setStudentShockCount(v=>v+1);
+    // Start 2-min timer
+    setShockTimer(0);
+    setTimerRunning(true);
+  }
+
+  // Generators based on remote data
+  const rhythmHR={'Normal':75,'VTach':180,'VFib':300,'Asystole':0,'PEA':50};
+  const ecgGen = useCallback((t)=>
+    data.cprActive ? cprECGSample(t, data.comprRate||100)
+                   : ecgSample(t, data.ecgRhythm, rhythmHR[data.ecgRhythm]||0),
+    [data.cprActive, data.comprRate, data.ecgRhythm]);
+
+  const spo2Gen = useCallback((t)=>{
+    const as=data.airwayStep||0;
+    const cr=data.comprRate||100;
+    if(as===0) return bvmSPO2Sample(t,cr,0.08);  // poor pleth at start
+    if(as===1) return bvmSPO2Sample(t,cr,0.18);  // OPA
+    if(as===2) return bvmSPO2Sample(t,cr,0.28);  // + Suction
+    if(as>=3)  return bvmSPO2Sample(t,cr,0.50);  // BVM — better
+    return 0.08;
+  },[data.airwayStep,data.comprRate]);
+
+  const ventStartRef = useRef(0);
+  useEffect(()=>{
+    ventStartRef.current = Date.now()/1000;
+  },[data.ventCycle]);
+
+  const etco2Gen = useCallback((t)=>{
+    if((data.airwayStep||0)<4) return 0.08+(Math.random()-0.5)*0.008;
+    const elapsed = Date.now()/1000 - ventStartRef.current;
+    if(elapsed>=4.0) return 0.08+(Math.random()-0.5)*0.008; // flat after exactly 2 breaths
+    const maxH=Math.min(0.75,(4+(data.etco2Quality||0)*26)/60);
+    const bp=elapsed%2;
+    if(bp<0.40){const x=bp/0.40;return 0.08+(maxH-0.08)*(1-Math.pow(1-x,1.8));}
+    else if(bp<0.90) return maxH+(bp-0.40)*0.02;
+    else if(bp<1.20){const x=(bp-0.90)/0.30;return(maxH+0.01)-(maxH+0.01-0.08)*Math.pow(x,0.3);}
+    return 0.08;
+  },[data.ventCycle, data.etco2Quality, data.airwayStep]);
+
+  const spo2Display = (data.airwayStep||0)===0?'--':(data.airwayStep||0)<=2?'52':'60';
+  const timerStr = `${String(Math.floor(shockTimer/60)).padStart(2,'0')}:${String(shockTimer%60).padStart(2,'0')}`;
+
+  return(
+    <div className="monitor">
+      {/* Values */}
+      <div className="vals">
+        <div className="vcell">
+          <span className="vlbl ec">ECG</span>
+          <span className="vnum ec" style={{fontSize:'1rem',marginTop:4}}>{data.ecgRhythm==='Normal'?'ROSC':'—'}</span>
+          <span className="vsub">{data.cprActive?'CPR':data.ecgRhythm}</span>
+        </div>
+        <div className="vcell">
+          <span className="vlbl sc">SPO2</span>
+          <span className={`vnum sc ${(data.airwayStep||0)>0?'alarm':''}`}
+            style={{fontSize:(data.airwayStep||0)===0?'1.5rem':'2rem'}}>
+            {spo2Display}
+          </span>
+          <span className="vsub">{(data.airwayStep||0)>0?'%':''}</span>
+        </div>
+        <div className="vcell">
+          <span className="vlbl bc">NIBP</span>
+          <span className="vnum bc" style={{fontSize:'1.3rem'}}>{data.ecgRhythm==='Normal'?'90/60':'—/—'}</span>
+        </div>
+        <div className="vcell">
+          <span className="vlbl xc">ETCO2</span>
+          <span className={`vnum xc ${(data.etco2||4)<10?'alarm':''}`}>{data.etco2||4}</span>
+          <span className="vsub">mmHg</span>
+          <span className="vlbl rc" style={{marginTop:4}}>RR</span>
+          <span className="vnum rc" style={{fontSize:'1.5rem'}}>{data.rr||0}</span>
+          <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginTop:4}}>
+            <div>
+              <span className="vlbl rc" style={{color:'#ff6666'}}>Shocks</span>
+              <span className="vnum rc" style={{fontSize:'1.5rem',color:'#ff6666',display:'block'}}>{(data.shockCount||0)+studentShockCount}</span>
+            </div>
+            {timerRunning&&(
+              <div style={{
+                textAlign:'center',
+                background:shockTimer>=120?'rgba(255,0,0,0.2)':'rgba(255,136,0,0.1)',
+                border:`1px solid ${shockTimer>=120?'#ff0000':'#ff8800'}`,
+                borderRadius:'5px',padding:'2px 4px',
+                animation:shockTimer>=120?'flash 0.5s infinite':'none'
+              }}>
+                <div style={{fontFamily:"'Share Tech Mono',monospace",fontSize:'0.95rem',color:shockTimer>=120?'#ff4444':'#ffaa00'}}>
+                  {String(Math.floor(shockTimer/60)).padStart(2,'0')}:{String(shockTimer%60).padStart(2,'0')}
+                </div>
+                <div style={{fontSize:'0.52rem',color:shockTimer>=120?'#ff4444':'#886633',letterSpacing:'0.5px'}}>
+                  {shockTimer>=120?'SHOCK DUE':'post-shock'}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Strips */}
+      <div className="strips">
+        <WaveCanvas gen={ecgGen}  color="#00ff7f" label={data.cprActive?'CPR — ECG':'ECG II LEAD'} lineWidth={2.5} key="stu-ecg"/>
+        <WaveCanvas gen={spo2Gen} color="#00bfff" label="Pleth / BVM" lineWidth={2.5} key="stu-spo2"/>
+        <WaveCanvas gen={etco2Gen}color="#ffd700" label="CO2" lineWidth={2.5} key="stu-etco2"/>
+      </div>
+
+      {/* Student CPR panel */}
+      <div className="ctrls">
+        <div className="topbar">
+          <button className="btn-home" onClick={onHome}>🏠 Home</button>
+          <Clock/>
+        </div>
+        <div className="rinfo">
+          <div className="rcode">{roomCode}</div>
+          <div className="rrole">Student — CPR</div>
+        </div>
+
+
+
+        {/* Defib */}
+        <div className="defib-panel" style={{marginTop:'6px'}}>
+          <div className="defib-title">⚡ Defibrillator</div>
+          <div className="defib-joules">
+            {[200,300,360].map(j=>(
+              <button key={j} className={`defib-j-btn ${studentJoules===j?'sel':''}`}
+                onClick={()=>{if(studentDefibState==='idle')setStudentJoules(j);}}>
+                {j}J
+              </button>
+            ))}
+          </div>
+          <button className={`shock-btn ${studentDefibState}`}
+            onClick={studentDefibState==='idle'?handleStudentCharge:studentDefibState==='ready'?handleStudentShock:undefined}>
+            {studentDefibState==='idle'?`⚡ Charge ${studentJoules}J`:studentDefibState==='charging'?'Charging...':'SHOCK — STAND CLEAR'}
+          </button>
+        </div>
+
+        {/* Instructor rhythm info */}
+        <div style={{marginTop:'8px',textAlign:'center',color:'#4a6a4a',fontSize:'0.7rem',letterSpacing:'1px'}}>
+          Instructor controls vitals &amp; rhythm
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
+function Monitor({session,onHome}){
+  const {mode,roomCode}=session;
+  const isInst=mode!=='student';
+
+  // ECG state
+  const [ecgR,setEcgR]=useState('Normal');
+  const [hr,setHr]=useState(75);
+  // SPO2
+  const [spo2Val,setSpo2Val]=useState(98);
+  const [perf,setPerf]=useState(0.8);
+  // ETCO2
+  const [etco2,setEtco2]=useState(35);
+  const [rr,setRr]=useState(14);
+  // Display (fluctuating)
+  const [dHR,setDHR]=useState(75);
+  const [dSPO2,setDSPO2]=useState(98);
+  const [dSBP,setDSBP]=useState(120);
+  const [dDBP,setDDBP]=useState(80);
+  const [dETCO2,setDETCO2]=useState(35);
+  const [dRR,setDRR]=useState(14);
+  // NIBP
+  const [nibpOn,setNibpOn]=useState(false);
+  const [nibpInterval,setNibpInterval]=useState(2);
+  const [nibpD,setNibpD]=useState('');
+  const [nibpN,setNibpN]=useState('');
+  const [sys,setSys]=useState(120);
+  const [dia,setDia]=useState(80);
+  // Sound
+  const [muted,setMuted]=useState(false);
+  // Student defib
+  const [studentJoules,setStudentJoules]=useState(200);
+  const [studentDefibState,setStudentDefibState]=useState('idle');
+  const [studentShockCount,setStudentShockCount]=useState(0);
+  // Alarms
+  const [alarms,setAlarms]=useState({});
+  const [isCPRMode,setIsCPRMode]=useState(session.mode==='cpr');
+  const [remoteData,setRemoteData]=useState(null);
+
+  const noiseR=useRef({hr:Math.random()*100,spo2:Math.random()*100,sbp:Math.random()*100,dbp:Math.random()*100,etco2:Math.random()*100,rr:Math.random()*100});
+  const sRef=useRef({});
+  useEffect(()=>{sRef.current={ecgR,hr,spo2Val,perf,sys,dia,etco2,rr};},[ecgR,hr,spo2Val,perf,sys,dia,etco2,rr]);
+
+  // Beep sync
+  const beepRef=useRef({lastCycle:0,beeped:false});
+  useEffect(()=>{
+    const id=setInterval(()=>{
+      if(muted)return;
+      const s=sRef.current;
+      if(s.ecgR==='Asystole'){audio.startFlatline();return;}
+      audio.stopFlatline();
+      if(s.ecgR==='VFib')return;
+      const rate=Math.max(s.hr,1);
+      const cl=60/rate;
+      const ct=((Date.now()/1000)%cl);
+      if(ct<beepRef.current.lastCycle) beepRef.current.beeped=false;
+      if(!beepRef.current.beeped&&ct<cl*0.15){
+        const spo2norm=Math.max(0,Math.min(1,(s.spo2Val-80)/20));
+        audio.beep(0.6+spo2norm*0.8);
+        beepRef.current.beeped=true;
+      }
+      beepRef.current.lastCycle=ct;
+    },50);
+    return()=>clearInterval(id);
+  },[muted]);
+
+  useEffect(()=>{audio.setMuted(muted);},[muted]);
+
+  // Fluctuation
+  useEffect(()=>{
+    const id=setInterval(()=>{
+      const t=Date.now()/1000*0.4,n=noiseR.current,s=sRef.current;
+      const p=(t,o)=>Math.sin(t+o)*0.5+Math.sin(t*2.1+o+1.3)*0.3+Math.sin(t*0.7+o+2.1)*0.2;
+      const nH=s.ecgR==='Asystole'?0:s.ecgR==='VFib'?300:Math.round(s.hr+p(t,n.hr)*3);
+      const nS=Math.round(s.spo2Val+p(t,n.spo2)*1);
+      const nSBP=Math.round(s.sys+p(t,n.sbp)*4);
+      const nDBP=Math.round(s.dia+p(t,n.dbp)*3);
+      const nE=Math.round(s.etco2+p(t,n.etco2)*2);
+      const nR=Math.round(s.rr+p(t,n.rr)*2);
+      setDHR(nH);setDSPO2(nS);setDSBP(nSBP);setDDBP(nDBP);setDETCO2(nE);setDRR(nR);
+      const a={};
+      if(s.ecgR==='Asystole'||s.ecgR==='VFib'||nH<40||nH>150)a.hr=true;
+      if(nS<94)a.spo2=true;if(nSBP<90||nSBP>160)a.bp=true;if(nE<25||nE>50)a.etco2=true;if(nR<8||nR>25)a.rr=true;
+      setAlarms(a);
+    },200);
+    return()=>clearInterval(id);
+  },[]);
+
+  // Firebase
+  useEffect(()=>{
+    if(!roomCode)return;
+    if(isInst){
+      const id=setInterval(()=>{
+        const s=sRef.current;
+        fw(roomCode,{ecgRhythm:s.ecgR,hr:s.hr,spo2:s.spo2Val,perfusion:s.perf,systolic:s.sys,diastolic:s.dia,etco2:s.etco2,rr:s.rr});
+      },500);
+      return()=>clearInterval(id);
+    }else{
+      const id=setInterval(async()=>{
+        const d=await fr(roomCode);if(!d)return;
+        if(d.mode==='cpr'){
+          // CPR room — switch to CPR student view
+          setRemoteData(d);
+          setIsCPRMode(true);
+          return;
+        }
+        setIsCPRMode(false);
+        setEcgR(d.ecgRhythm);setHr(d.hr);setSpo2Val(d.spo2);setPerf(d.perfusion);
+        setSys(d.systolic);setDia(d.diastolic);setBpSt(d.bpState||'Normal');setEtco2(d.etco2);setRr(d.rr);
+      },1000);
+      return()=>clearInterval(id);
+    }
+  },[roomCode,isInst]);
+
+  // NIBP
+  function handleStudentCharge(){
+    if(studentDefibState!=='idle') return;
+    audio.init(); // ensure audio context active
+    setStudentDefibState('charging');
+    audio.startCharge(studentJoules,()=>setStudentDefibState('ready'));
+  }
+  function handleStudentShock(){
+    if(studentDefibState!=='ready') return;
+    audio.shock();
+    setStudentDefibState('idle');
+    setStudentShockCount(v=>v+1);
+  }
+
+  useEffect(()=>{
+    if(!nibpOn){setNibpN('');setNibpD('');return;}
+    let cd=nibpInterval*60;
+    const doR=()=>{
+      setNibpD('---/---');
+      audio.startNIBP(); // pump inflation + deflation sound
+      setTimeout(()=>{
+        const s=sRef.current;
+        const sb=s.sys+Math.round((Math.random()-0.5)*6);
+        const db=s.dia+Math.round((Math.random()-0.5)*4);
+        setNibpD(`${sb}/${db} (${Math.round(db+(sb-db)/3)})`);
+      },4000);
+    };
+    doR();
+    const id=setInterval(()=>{
+      cd--;
+      const m=Math.floor(cd/60),s=cd%60;
+      setNibpN(`Next: ${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`);
+      if(cd<=0){cd=nibpInterval*60;doR();}
+    },1000);
+    return()=>clearInterval(id);
+  },[nibpOn,nibpInterval]);
+
+  // Generators
+  const ecgG  =useCallback((t)=>ecgSample(t,ecgR,hr),[ecgR,hr]);
+  const spo2G =useCallback((t)=>spo2Sample(t,75,perf),[perf]);
+  const etG   =useCallback((t)=>etco2Sample(t,rr,etco2),[rr,etco2]);
+
+  // SPO2 preset helper
+  function setSPO2Preset(val,pi){setSpo2Val(val);setPerf(pi);}
+
+  // Safe to do conditional render AFTER all hooks
+  if(!isInst && isCPRMode && remoteData){
+    return <CPRStudentView data={remoteData} roomCode={roomCode} onHome={onHome}/>;
+  }
+
+  return(
+    <div className="monitor">
+      {/* Values column */}
+      <div className="vals">
+        <div className="vcell">
+          <span className="vlbl ec">HR</span>
+          <span className={`vnum ec ${alarms.hr?'alarm':''}`}>{ecgR==='Asystole'?'0':ecgR==='VFib'?'---':dHR}</span>
+          <span className="vsub">bpm</span>
+        </div>
+        <div className="vcell">
+          <span className="vlbl sc">SPO2</span>
+          <span className={`vnum sc ${alarms.spo2?'alarm':''}`}>{dSPO2}</span>
+          <span className="vsub">%</span>
+        </div>
+        <div className="vcell">
+          <span className="vlbl bc">NIBP</span>
+          <span className={`vnum bc ${alarms.bp?'alarm':''}`} style={{fontSize:'1.8rem'}}>{nibpD||`${dSBP}/${dDBP} (${Math.round(dDBP+(dSBP-dDBP)/3)})`}</span>
+          {nibpN&&<span className="nnext">{nibpN}</span>}
+        </div>
+        <div className="vcell">
+          <span className="vlbl xc">ETCO2</span>
+          <span className={`vnum xc ${alarms.etco2?'alarm':''}`}>{dETCO2}</span>
+          <span className="vsub">mmHg</span>
+          <span className="vlbl rc" style={{marginTop:5}}>RR</span>
+          <span className={`vnum rc ${alarms.rr?'alarm':''}`} style={{fontSize:'1.8rem'}}>{dRR}</span>
+          <span className="vsub">brpm</span>
+        </div>
+      </div>
+
+      {/* Waveforms — 3 strips (no BP waveform) */}
+      <div className="strips">
+        <WaveCanvas gen={ecgG}  color="#00ff7f" label="ECG II LEAD" lineWidth={2.5} key="ecg-strip"/>
+        <WaveCanvas gen={spo2G} color="#00bfff" label="Pleth"       lineWidth={2.5} key="spo2-strip"/>
+        <WaveCanvas gen={etG}   color="#ffd700" label="CO2"         lineWidth={2.5} key="etco2-strip"/>
+      </div>
+
+      {/* Controls */}
+      <div className="ctrls">
+        <div className="topbar">
+          <button className="btn-home" onClick={()=>{audio.stopFlatline();onHome();}}>🏠 Home</button>
+          <Clock/>
+        </div>
+
+        {roomCode&&(
+          <div className="rinfo">
+            <div className="rcode">{roomCode}</div>
+            <div className="rrole">{mode==='instructor'?'Instructor':'Student'}</div>
+          </div>
+        )}
+
+        {isInst&&<>
+          {/* ECG */}
+          <div className="csec">
+            <div className="ctitle ec">ECG</div>
+            {[['Normal — Brady','Normal',40],['Normal','Normal',80],['Normal — Tachy','Normal',140],['V-Tach','VTach',180],['V-Fib','VFib',300],['Asystole','Asystole',0],['PEA','PEA',50]].map(([l,v,r])=>(
+              <button key={l} className={`cbtn ${ecgR===v&&hr===r?'on':''}`} onClick={()=>{setEcgR(v);setHr(r);}}>{l}</button>
+            ))}
+          </div>
+          <div className="cdiv"/>
+
+          {/* SPO2 */}
+          <div className="csec">
+            <div className="ctitle sc">SPO2</div>
+            <div style={{fontSize:'0.62rem',color:'#6a8fa8',textAlign:'center',letterSpacing:'1px',textTransform:'uppercase',marginBottom:2}}>Perfusion</div>
+            <button className={`cbtn ${spo2Val===98&&perf===0.8?'on':''}`}  onClick={()=>setSPO2Preset(98,0.8)}>Normal</button>
+            <button className={`cbtn ${perf===0.15?'on':''}`}               onClick={()=>setSPO2Preset(spo2Val,0.15)}>Low Perfusion</button>
+            <div style={{fontSize:'0.62rem',color:'#6a8fa8',textAlign:'center',letterSpacing:'1px',textTransform:'uppercase',margin:'4px 0 2px'}}>Hypoxia</div>
+            <button className={`cbtn ${spo2Val===90&&perf!==0.15?'sel':''}`} onClick={()=>setSPO2Preset(90,0.6)}>Mild (~90%)</button>
+            <button className={`cbtn ${spo2Val===88&&perf!==0.15?'sel':''}`} onClick={()=>setSPO2Preset(88,0.45)}>Moderate (88%)</button>
+            <button className={`cbtn ${spo2Val===80&&perf!==0.15?'sel':''}`} onClick={()=>setSPO2Preset(80,0.25)}>Severe (80%)</button>
+          </div>
+          <div className="cdiv"/>
+
+          {/* NIBP */}
+          <div className="csec">
+            <div className="ctitle bc">NIBP</div>
+            <button className={`cbtn ${sys===80?'on':''}`}   onClick={()=>{setSys(80);setDia(50);}}>Hypotension</button>
+            <button className={`cbtn ${sys===120?'on':''}`}  onClick={()=>{setSys(120);setDia(80);}}>Normal</button>
+            <button className={`cbtn ${sys===180?'on':''}`}  onClick={()=>{setSys(180);setDia(110);}}>Hypertension</button>
+            <div style={{fontSize:'0.62rem',color:'#6a8fa8',textAlign:'center',letterSpacing:'1px',textTransform:'uppercase',margin:'3px 0 2px'}}>Auto Interval</div>
+            <select
+              value={nibpInterval}
+              onChange={e=>setNibpInterval(Number(e.target.value))}
+              style={{width:'100%',padding:'5px 7px',background:'#0d2035',border:'1px solid #2a3a4a',borderRadius:'5px',color:'#bbb',fontFamily:"'Rajdhani',sans-serif",fontSize:'0.78rem',fontWeight:600,cursor:'pointer',outline:'none',marginBottom:'3px'}}
+            >
+              <option value={1}>Every 1 min</option>
+              <option value={2}>Every 2 min</option>
+              <option value={3}>Every 3 min</option>
+              <option value={5}>Every 5 min</option>
+              <option value={10}>Every 10 min</option>
+              <option value={15}>Every 15 min</option>
+              <option value={30}>Every 30 min</option>
+            </select>
+            <button className={`cbtn ${nibpOn?'ora':''}`} onClick={()=>setNibpOn(v=>!v)}>{nibpOn?`NIBP q${nibpInterval}min ●`:`NIBP q${nibpInterval}min`}</button>
+          </div>
+          <div className="cdiv"/>
+
+          {/* ETCO2 */}
+          <div className="csec">
+            <div className="ctitle xc">ETCO2</div>
+            <div style={{fontSize:'0.62rem',color:'#6a8fa8',textAlign:'center',letterSpacing:'1px',textTransform:'uppercase',marginBottom:2}}>Value</div>
+            <button className={`cbtn ${etco2===35?'on':''}`} onClick={()=>setEtco2(35)}>Normal (35)</button>
+            <button className={`cbtn ${etco2===55?'on':''}`} onClick={()=>setEtco2(55)}>High (55)</button>
+            <button className={`cbtn ${etco2===18?'on':''}`} onClick={()=>setEtco2(18)}>Low (18)</button>
+            <button className={`cbtn ${etco2===5?'on':''}`}  onClick={()=>setEtco2(5)}>Arrest / Vent Fail (5)</button>
+            <div style={{fontSize:'0.62rem',color:'#6a8fa8',textAlign:'center',letterSpacing:'1px',textTransform:'uppercase',margin:'4px 0 2px'}}>Resp Rate</div>
+            {[5,10,14,25,30].map(v=>(
+              <button key={v} className={`cbtn ${rr===v?'on':''}`} onClick={()=>setRr(v)}>RR {v}</button>
+            ))}
+          </div>
+          <div className="cdiv"/>
+
+          {/* Sound */}
+          <button className="cbtn" onClick={()=>setMuted(v=>!v)}>{muted?'🔇 Muted':'🔊 Sound'}</button>
+        </>}
+
+        {!isInst&&(
+          <div style={{textAlign:'center',color:'#6a8a6a',fontSize:'0.72rem',marginTop:10,padding:'0 5px'}}>
+            View only<br/>Instructor controls vitals
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── CPR Monitor Component ───────────────────────────
+function CPRMonitor({session, onHome}){
+  const {roomCode} = session;
+
+  // CPR state
+  const [cprActive,setCprActive]    = useState(false);
+  const [comprRate,setComprRate]    = useState(100);
+  const [etco2Quality,setEtco2Q]    = useState(0.3); // 0-1
+  const [airwayStep,setAirwayStep]  = useState(0);
+  const [ventCycle,setVentCycle]    = useState(0); // increments each time instructor clicks ventilate // 0=none,1=OPA,2=suction,3=BVM,4=ventilating
+  const [rhythm,setRhythm]          = useState('VFib');
+  const [postShock,setPostShock]    = useState(false);
+
+  // Defib state
+  const [joules,setJoules]          = useState(200);
+  const [defibState,setDefibState]  = useState('idle');
+  const [instrTimer,setInstrTimer]  = useState(0); // idle|charging|ready
+  const [shockCount,setShockCount]  = useState(0);
+  const instrTimerRef = useRef(null);
+
+  // Display values
+  const [dispETCO2,setDispETCO2]    = useState(5);
+  const [dispHR,setDispHR]          = useState(0);
+
+  const sRef = useRef({cprActive,comprRate,etco2Quality,airwayStep,rhythm,shockCount,ventCycle});
+  useEffect(()=>{sRef.current={cprActive,comprRate,etco2Quality,airwayStep,rhythm,shockCount,ventCycle};},[cprActive,comprRate,etco2Quality,airwayStep,rhythm,shockCount,ventCycle]);
+
+  // Update display ETCO2 based on quality
+  useEffect(()=>{
+    const val = airwayStep>=3 ? (5+etco2Quality*30) : 5;
+    setDispETCO2(Math.round(val));
+    setDispHR(rhythm==='Normal'?75:rhythm==='VFib'?0:0);
+  },[etco2Quality,airwayStep,rhythm]);
+
+  // Firebase sync
+  useEffect(()=>{
+    if(!roomCode) return;
+    const id=setInterval(()=>{
+      const s=sRef.current;
+      const rhythmHR={'Normal':75,'VTach':180,'VFib':300,'Asystole':0,'PEA':50};
+      // SPO2 based on airway step
+      const spo2Val = s.airwayStep===0?0:s.airwayStep<=2?52:s.airwayStep===3?60:88;
+      const perfVal = s.airwayStep===0?0.05:s.airwayStep<=2?0.12:s.airwayStep===3?0.20:0.55;
+      // ETCO2 based on airway + quality
+      const etco2Val = s.airwayStep>=4 ? Math.round(4+s.etco2Quality*26) : 4;
+      const rrVal    = s.airwayStep>=4 ? 8 : 0;
+      fw(roomCode,{
+        mode:'cpr',
+        ecgRhythm:s.rhythm,
+        hr:rhythmHR[s.rhythm]||0,
+        cprActive:s.cprActive,
+        comprRate:s.comprRate,
+        spo2:spo2Val,
+        perfusion:perfVal,
+        comprRate:s.comprRate,
+        systolic:s.rhythm==='Normal'?90:0,
+        diastolic:s.rhythm==='Normal'?60:0,
+        bpState:'Normal',
+        etco2:etco2Val,
+        rr:rrVal,
+        airwayStep:s.airwayStep,
+        etco2Quality:s.etco2Quality,
+        shockCount:s.shockCount,
+        ventCycle:s.ventCycle
+      });
+    },500);
+    return()=>clearInterval(id);
+  },[roomCode]);
+
+  // Generators — always pass correct HR for each rhythm
+  const rhythmHR = {'Normal':75,'VTach':180,'VFib':300,'Asystole':0,'PEA':50};
+  const ecgGen  = useCallback((t)=>
+    cprActive ? cprECGSample(t,comprRate) : ecgSample(t,rhythm, rhythmHR[rhythm]||0),
+    [cprActive,comprRate,rhythm]);
+
+  // SPO2: compression-driven pleth — improves with each airway step
+  const spo2Gen = useCallback((t)=>{
+    if(airwayStep===0) return bvmSPO2Sample(t,comprRate,0.08);  // poor pleth — compressions only, very low amp
+    if(airwayStep===1) return bvmSPO2Sample(t,comprRate,0.18);  // OPA — slightly better
+    if(airwayStep===2) return bvmSPO2Sample(t,comprRate,0.28);  // + Suction — improving
+    if(airwayStep>=3)  return bvmSPO2Sample(t,comprRate,0.50);  // BVM + ventilating — noticeably better
+    return 0.08;
+  },[airwayStep,comprRate]);
+
+  // Track when each ventilation cycle started
+  const ventStartRef = useRef(0);
+  useEffect(()=>{
+    if(ventCycle>0) ventStartRef.current = Date.now()/1000;
+  },[ventCycle]);
+
+  // ETCO2: flat until vent button clicked, shows 2 breaths (~4s) then flat again
+  const etco2GenRef = useRef({ventCycle,etco2Quality,airwayStep});
+  useEffect(()=>{etco2GenRef.current={ventCycle,etco2Quality,airwayStep};},[ventCycle,etco2Quality,airwayStep]);
+
+  const etco2Gen = useCallback((t)=>{
+    const {airwayStep:as, etco2Quality:eq} = etco2GenRef.current;
+    if(as<4) return 0.08 + (Math.random()-0.5)*0.008; // flat before ventilation
+    // Time since last vent button click
+    const elapsed = Date.now()/1000 - ventStartRef.current;
+    // Show 2 breaths (4s window) then go flat
+    if(elapsed >= 4.0) return 0.08 + (Math.random()-0.5)*0.008; // strictly flat after exactly 2 breaths
+    // 2 breath waveforms — each breath 2s, strictly cut at 4.0s
+    const maxH = Math.min(0.75,(4+eq*26)/60);
+    const breathPos = elapsed % 2; // position within each 2s breath
+    if(breathPos<0.40){
+      const x=breathPos/0.40;
+      return 0.08+(maxH-0.08)*(1-Math.pow(1-x,1.8));
+    } else if(breathPos<0.90){
+      return maxH+(breathPos-0.40)*0.02;
+    } else if(breathPos<1.20){
+      const x=(breathPos-0.90)/0.30;
+      return (maxH+0.01)-(maxH+0.01-0.08)*Math.pow(x,0.3);
+    }
+    return 0.08;
+  },[]);
+
+  function handleCharge(){
+    if(defibState==='charging'||defibState==='ready') return;
+    setDefibState('charging');
+    audio.startCharge(joules,()=>{setDefibState('ready');});
+  }
+
+  function handleShock(){
+    if(defibState!=='ready') return;
+    audio.shock();
+    setDefibState('idle');
+    setShockCount(v=>v+1);
+    setPostShock(true);
+    setCprActive(false);
+    setTimeout(()=>setPostShock(false),500);
+    // Start 2-min post-shock timer
+    setInstrTimer(0);
+    if(instrTimerRef.current) clearInterval(instrTimerRef.current);
+    instrTimerRef.current = setInterval(()=>{
+      setInstrTimer(v=>{
+        if(v>=120){ clearInterval(instrTimerRef.current); return 120; }
+        return v+1;
+      });
+    },1000);
+  }
+
+
+
+  return(
+    <div className="monitor">
+      {/* Values — dynamic based on airway steps */}
+      {(()=>{
+        // SPO2 value based on airway progress
+        const spo2Display = airwayStep===0?'--':airwayStep<=2?'52':airwayStep===3?'60':airwayStep>=4?'60':'--';
+
+        // ETCO2 value based on airway + quality
+        const etco2Display = airwayStep>=4 ? Math.round(4+etco2Quality*26) : 4;
+        const rrDisplay    = airwayStep>=4 ? 8 : 0;
+        return(
+          <div className="vals">
+            <div className="vcell">
+              <span className="vlbl ec">ECG</span>
+              <span className="vnum ec" style={{fontSize:'1rem',marginTop:4}}>{rhythm==='Normal'?'ROSC':'—'}</span>
+              <span className="vsub">{cprActive?'CPR':rhythm}</span>
+            </div>
+            <div className="vcell">
+              <span className="vlbl sc">SPO2</span>
+              <span className={`vnum sc ${airwayStep>0?'alarm':''}`}
+                style={{fontSize:airwayStep===0?'1.5rem':'2rem'}}>
+                {spo2Display}
+              </span>
+              <span className="vsub">{airwayStep>0?'%':''}</span>
+            </div>
+            <div className="vcell">
+              <span className="vlbl bc">NIBP</span>
+              <span className="vnum bc" style={{fontSize:'1.3rem'}}>{rhythm==='Normal'?'90/60':'—/—'}</span>
+            </div>
+            <div className="vcell">
+              <span className="vlbl xc">ETCO2</span>
+              <span className={`vnum xc ${etco2Display<10?'alarm':''}`}>{etco2Display}</span>
+              <span className="vsub">mmHg</span>
+              <span className="vlbl rc" style={{marginTop:4}}>RR</span>
+              <span className="vnum rc" style={{fontSize:'1.5rem'}}>{rrDisplay}</span>
+              <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginTop:4}}>
+                <div>
+                  <span className="vlbl rc" style={{color:'#ff6666'}}>Shocks</span>
+                  <span className="vnum rc" style={{fontSize:'1.8rem',color:'#ff6666',display:'block'}}>{shockCount}</span>
+                </div>
+                {instrTimer>0&&(
+                  <div style={{
+                    textAlign:'center',
+                    background:instrTimer>=120?'rgba(255,0,0,0.2)':'rgba(255,136,0,0.1)',
+                    border:`1px solid ${instrTimer>=120?'#ff0000':'#ff8800'}`,
+                    borderRadius:'5px',padding:'2px 4px',
+                    animation:instrTimer>=120?'flash 0.5s infinite':'none'
+                  }}>
+                    <div style={{fontFamily:"'Share Tech Mono',monospace",fontSize:'0.95rem',color:instrTimer>=120?'#ff4444':'#ffaa00'}}>
+                      {String(Math.floor(instrTimer/60)).padStart(2,'0')}:{String(instrTimer%60).padStart(2,'0')}
+                    </div>
+                    <div style={{fontSize:'0.52rem',color:instrTimer>=120?'#ff4444':'#886633',letterSpacing:'0.5px'}}>
+                      {instrTimer>=120?'SHOCK DUE':'post-shock'}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* Strips — 3 strips */}
+      <div className="strips">
+        <WaveCanvas gen={ecgGen}  color={postShock?'#ffffff':'#00ff7f'} label={cprActive?'CPR — ECG':'ECG II LEAD'} lineWidth={2.5} key="cpr-ecg"/>
+        <WaveCanvas gen={spo2Gen} color="#00bfff" label="Pleth / BVM" lineWidth={2.5} key="cpr-spo2"/>
+        <WaveCanvas gen={etco2Gen}color="#ffd700" label="CO2" lineWidth={2.5} key="cpr-etco2"/>
+      </div>
+
+      {/* CPR Controls */}
+      <div className="ctrls">
+        <div className="topbar">
+          <button className="btn-home" onClick={()=>{audio.stopFlatline();audio.stopCharge();onHome();}}>🏠 Home</button>
+          <Clock/>
+        </div>
+
+        {roomCode&&(
+          <div className="rinfo">
+            <div className="rcode">{roomCode}</div>
+            <div className="rrole">CPR Instructor</div>
+          </div>
+        )}
+
+
+        {/* CPR toggle */}
+        <div className="csec">
+          <div className="ctitle" style={{color:'#ff4444'}}>CPR</div>
+          <button className={`cbtn ${cprActive?'on':''}`}
+            onClick={()=>setCprActive(v=>!v)}
+            style={{background:cprActive?'#4a0000':'',borderColor:cprActive?'#ff4444':'',color:cprActive?'#ff6666':''}}>
+            {cprActive?'⏸ Stop CPR':'▶ Start CPR'}
+          </button>
+          {cprActive&&(
+            <div style={{display:'flex',gap:'3px',marginTop:'2px'}}>
+              {[80,100,120].map(r=>(
+                <button key={r} className={`cbtn ${comprRate===r?'on':''}`}
+                  style={{flex:1,fontSize:'0.72rem'}}
+                  onClick={()=>setComprRate(r)}>{r}/min</button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="cdiv"/>
+
+        {/* Ventilation — always visible */}
+        <div className="csec">
+          <div className="ctitle" style={{color:'#00bfff'}}>Ventilation</div>
+          <button
+            onClick={()=>{setVentCycle(v=>v+1);setAirwayStep(4);}}
+            style={{
+              width:'100%',padding:'10px 7px',
+              border:'2px solid #ffd700',borderRadius:'6px',
+              background:'#1a1500',color:'#ffd700',
+              fontFamily:"'Rajdhani',sans-serif",
+              fontSize:'0.92rem',fontWeight:700,
+              cursor:'pointer',letterSpacing:'1px',textAlign:'center',
+              boxShadow:'0 0 10px rgba(255,215,0,0.25)'
+            }}>
+            ⚡ Ventilate — 2 Breaths
+          </button>
+          <button
+            onClick={()=>{setAirwayStep(0);setVentCycle(0);}}
+            style={{
+              width:'100%',padding:'5px 7px',marginTop:'3px',
+              border:'1px solid #3a1a1a',borderRadius:'5px',
+              background:'transparent',color:'#664444',
+              fontFamily:"'Rajdhani',sans-serif",fontSize:'0.72rem',
+              fontWeight:600,cursor:'pointer',textAlign:'center'
+            }}>
+            Reset Ventilation
+          </button>
+        </div>
+
+        <div className="cdiv"/>
+
+        {/* ETCO2 quality */}
+        <div className="csec">
+          <div className="ctitle xc">ETCO2 Quality</div>
+          <div className="etco2-quality">
+            {[['Poor',0],['Fair',0.5],['Good',1]].map(([l,v])=>(
+              <button key={l} className={`eq-btn ${etco2Quality===v?'on':''}`}
+                onClick={()=>setEtco2Q(v)}>{l}</button>
+            ))}
+          </div>
+        </div>
+
+        <div className="cdiv"/>
+
+        {/* Defib */}
+        <div className="defib-panel">
+          <div className="defib-title">⚡ Defibrillator</div>
+          <div className="defib-joules">
+            {[200,300,360].map(j=>(
+              <button key={j} className={`defib-j-btn ${joules===j?'sel':''}`}
+                onClick={()=>{if(defibState==='idle')setJoules(j);}}>
+                {j}J
+              </button>
+            ))}
+          </div>
+          <button
+            className={`shock-btn ${defibState}`}
+            onClick={defibState==='idle'?handleCharge:defibState==='ready'?handleShock:undefined}>
+            {defibState==='idle'?`⚡ Charge ${joules}J`:defibState==='charging'?'Charging...':'SHOCK — STAND CLEAR'}
+          </button>
+        </div>
+
+        <div className="cdiv"/>
+
+        {/* Post shock rhythm */}
+        <div className="csec">
+          <div className="ctitle ec">Post-Shock</div>
+          {[['VFib','VFib'],['VTach','VTach'],['Asystole','Asystole'],['PEA','PEA'],['ROSC','Normal']].map(([l,v])=>(
+            <button key={v} className={`cbtn ${rhythm===v?'on':''}`}
+              onClick={()=>{setRhythm(v);setCprActive(false);}}>
+              {l}
+            </button>
+          ))}
+        </div>
+
+      </div>
+    </div>
+  );
+}
+
+// ── Drug Dose Calculator ─────────────────────────────
+const DRUGS = [
+  {
+    name:'Dopamine', category:'Vasopressor / Inotrope',
+    defaultConc:{drug:400,unit:'mg',vol:250},
+    calcType:'mcg/kg/min',
+    range:'5-20 mcg/kg/min IV/IO (ACP — Cardiogenic Shock MD)',
+    indications:'',
+    conditions:'',
+    contraindications:'',
+    note:'',
+    color:'#ff8c00'
+  },
+  {
+    name:'Epinephrine', category:'Vasopressor / Bronchodilator',
+    defaultConc:{drug:1,unit:'mg',vol:10},
+    calcType:'mg/kg',
+    range:'Cardiac arrest: 1mg IV/IO q3-5min | Anaphylaxis: 0.5mg IM (1:1000)',
+    indications:'',
+    conditions:'',
+    contraindications:'',
+    note:'',
+    color:'#ff4444'
+  },
+  {
+    name:'Amiodarone', category:'Antiarrhythmic',
+    defaultConc:{drug:150,unit:'mg',vol:100},
+    calcType:'mg/h',
+    range:'Cardiac arrest: 300mg IV/IO | Stable VT: 150mg over 10 min IV',
+    indications:'',
+    conditions:'',
+    contraindications:'',
+    note:'',
+    color:'#aa44ff'
+  },
+  {
+    name:'Lidocaine', category:'Antiarrhythmic',
+    defaultConc:{drug:100,unit:'mg',vol:5},
+    calcType:'mg/kg',
+    range:'1-1.5 mg/kg IV/IO/ETT (ACP cardiac arrest)',
+    indications:'',
+    conditions:'',
+    contraindications:'',
+    note:'',
+    color:'#8888ff'
+  },
+  {
+    name:'Adenosine', category:'Antiarrhythmic',
+    defaultConc:null,
+    calcType:'mg/kg',
+    range:'6mg rapid IV push → 12mg x2 if no conversion (ACP)',
+    indications:'',
+    conditions:'',
+    contraindications:'',
+    note:'',
+    color:'#44aaff'
+  },
+  {
+    name:'Atropine', category:'Anticholinergic',
+    defaultConc:null,
+    calcType:'mg/kg',
+    range:'0.5mg IV/IO q3-5min — max 3mg (ACP Symptomatic Bradycardia MD)',
+    indications:'',
+    conditions:'',
+    contraindications:'',
+    note:'',
+    color:'#44ffaa'
+  },
+  {
+    name:'Morphine', category:'Opioid Analgesic',
+    defaultConc:{drug:10,unit:'mg',vol:10},
+    calcType:'mg/kg',
+    range:'0.1 mg/kg IV/IO/SC — max 0.2 mg/kg per call (ACP Analgesia MD)',
+    indications:'',
+    conditions:'',
+    contraindications:'',
+    note:'',
+    color:'#ff88aa'
+  },
+  {
+    name:'Fentanyl', category:'Opioid Analgesic',
+    defaultConc:{drug:250,unit:'mcg',vol:5},
+    calcType:'mcg/kg',
+    range:'1 mcg/kg IV/IM/IN — max 2 mcg/kg per call (ACP Analgesia MD)',
+    indications:'',
+    conditions:'',
+    contraindications:'',
+    note:'',
+    color:'#ffaacc'
+  },
+  {
+    name:'Ketamine', category:'Analgesic / Dissociative',
+    defaultConc:{drug:200,unit:'mg',vol:20},
+    calcType:'mg/kg',
+    range:'0.3 mg/kg IV (analgesia) | 4 mg/kg IM (dissociative) — ACP Analgesia MD',
+    indications:'',
+    conditions:'',
+    contraindications:'',
+    note:'',
+    color:'#ffdd44'
+  },
+  {
+    name:'Midazolam', category:'Benzodiazepine',
+    defaultConc:{drug:10,unit:'mg',vol:2},
+    calcType:'mg/kg',
+    range:'0.1 mg/kg IV/IM/IN/BC — max 5mg (ACP Seizure / Combative MD)',
+    indications:'',
+    conditions:'',
+    contraindications:'',
+    note:'',
+    color:'#aaffdd'
+  },
+];
+
+function DrugCalculator({onHome}){
+  const [selectedDrug, setSelectedDrug] = useState(DRUGS[0]);
+  const [weight, setWeight]             = useState('');
+  const [weightUnit, setWeightUnit]     = useState('kg');
+  const [dose, setDose]                 = useState('');
+  const [doseUnit, setDoseUnit]         = useState('');
+  const [drugAmt, setDrugAmt]           = useState('');
+  const [volAmt, setVolAmt]             = useState('');
+  const [concUnit, setConcUnit]         = useState('mg');
+  const [result, setResult]             = useState(null);
+  const [error, setError]               = useState('');
+
+  // Set defaults when drug changes
+  useEffect(()=>{
+    setResult(null); setError('');
+    setDose('');
+    if(selectedDrug.defaultConc){
+      setDrugAmt(String(selectedDrug.defaultConc.drug));
+      setVolAmt(String(selectedDrug.defaultConc.vol));
+      setConcUnit(selectedDrug.defaultConc.unit);
+    } else {
+      setDrugAmt(''); setVolAmt('');
+    }
+    // Set default dose unit based on calc type
+    const ct = selectedDrug.calcType;
+    if(ct==='mcg/kg/min') setDoseUnit('mcg/kg/min');
+    else if(ct==='mcg/min') setDoseUnit('mcg/min');
+    else if(ct==='mg/h') setDoseUnit('mg/h');
+    else if(ct==='mg/min') setDoseUnit('mg/min');
+    else if(ct==='mg/kg') setDoseUnit('mg/kg');
+    else if(ct==='mcg/kg') setDoseUnit('mcg/kg');
+    else setDoseUnit('mg');
+  },[selectedDrug]);
+
+  function calculate(){
+    setError(''); setResult(null);
+    const wKg = weightUnit==='lb' ? parseFloat(weight)/2.2046 : parseFloat(weight);
+    const d   = parseFloat(dose);
+    const dA  = parseFloat(drugAmt);
+    const vA  = parseFloat(volAmt);
+
+    if(!weight || isNaN(wKg) || wKg<=0){ setError('Enter a valid patient weight.'); return; }
+    if(!dose   || isNaN(d)   || d<=0)  { setError('Enter a valid dose.'); return; }
+
+    // Concentration in base units per mL
+    // drugAmt in concUnit, volAmt in mL
+    let concMcgPerML = 0;
+    let needsConc = selectedDrug.calcType.includes('/min') || selectedDrug.calcType==='mg/h';
+
+    if(needsConc){
+      if(!drugAmt||!volAmt||isNaN(dA)||isNaN(vA)||vA<=0){ setError('Enter drug concentration (drug amount + volume).'); return; }
+      // Convert drug amount to mcg
+      const dAMcg = concUnit==='mg' ? dA*1000 : concUnit==='g' ? dA*1000000 : dA;
+      concMcgPerML = dAMcg / vA;
+    }
+
+    let res = {};
+
+    if(doseUnit==='mcg/kg/min'){
+      const mcgMin = d * wKg;                         // mcg/min
+      const mlMin  = mcgMin / concMcgPerML;           // mL/min
+      const mlH    = mlMin * 60;                       // mL/h
+      res = {
+        label: 'Infusion Rate',
+        main: `${mlH.toFixed(1)} mL/h`,
+        steps:[
+          `Weight: ${wKg.toFixed(1)} kg`,
+          `Dose rate: ${d} mcg/kg/min × ${wKg.toFixed(1)} kg = ${mcgMin.toFixed(1)} mcg/min`,
+          `Concentration: ${dA}${concUnit} in ${vA}mL = ${(concMcgPerML/1000).toFixed(2)} mg/mL`,
+          `Rate: ${mcgMin.toFixed(1)} mcg/min ÷ ${concMcgPerML.toFixed(1)} mcg/mL × 60 = ${mlH.toFixed(1)} mL/h`,
+        ]
+      };
+    } else if(doseUnit==='mcg/min'){
+      const mlMin = d / concMcgPerML;
+      const mlH   = mlMin * 60;
+      res = {
+        label:'Infusion Rate',
+        main:`${mlH.toFixed(1)} mL/h`,
+        steps:[
+          `Dose: ${d} mcg/min`,
+          `Concentration: ${(concMcgPerML/1000).toFixed(3)} mg/mL (${concMcgPerML.toFixed(2)} mcg/mL)`,
+          `Rate: ${d} ÷ ${concMcgPerML.toFixed(2)} × 60 = ${mlH.toFixed(1)} mL/h`,
+        ]
+      };
+    } else if(doseUnit==='mg/h'){
+      const dAMg = concUnit==='mg' ? dA : concUnit==='g' ? dA*1000 : dA/1000;
+      const concMgML = dAMg/vA;
+      const mlH = d/concMgML;
+      res = {
+        label:'Infusion Rate',
+        main:`${mlH.toFixed(1)} mL/h`,
+        steps:[
+          `Dose: ${d} mg/h`,
+          `Concentration: ${dAMg}mg in ${vA}mL = ${concMgML.toFixed(3)} mg/mL`,
+          `Rate: ${d} ÷ ${concMgML.toFixed(3)} = ${mlH.toFixed(1)} mL/h`,
+        ]
+      };
+    } else if(doseUnit==='mg/min'){
+      const dAMg = concUnit==='mg' ? dA : concUnit==='g' ? dA*1000 : dA/1000;
+      const concMgML = dAMg/vA;
+      const mlMin = d/concMgML;
+      const mlH = mlMin*60;
+      res = {
+        label:'Infusion Rate',
+        main:`${mlH.toFixed(1)} mL/h (${mlMin.toFixed(2)} mL/min)`,
+        steps:[
+          `Dose: ${d} mg/min`,
+          `Concentration: ${concMgML.toFixed(3)} mg/mL`,
+          `Rate: ${d} ÷ ${concMgML.toFixed(3)} × 60 = ${mlH.toFixed(1)} mL/h`,
+        ]
+      };
+    } else if(doseUnit==='mg/kg'){
+      const totalMg = d*wKg;
+      res = {
+        label:'Total Dose',
+        main:`${totalMg.toFixed(1)} mg`,
+        steps:[
+          `Weight: ${wKg.toFixed(1)} kg`,
+          `Dose: ${d} mg/kg × ${wKg.toFixed(1)} kg = ${totalMg.toFixed(1)} mg`,
+        ]
+      };
+    } else if(doseUnit==='mcg/kg'){
+      const totalMcg = d*wKg;
+      res = {
+        label:'Total Dose',
+        main:`${totalMcg.toFixed(0)} mcg (${(totalMcg/1000).toFixed(2)} mg)`,
+        steps:[
+          `Weight: ${wKg.toFixed(1)} kg`,
+          `Dose: ${d} mcg/kg × ${wKg.toFixed(1)} kg = ${totalMcg.toFixed(0)} mcg`,
+        ]
+      };
+    }
+    // Safety: ensure steps always exists
+    if(!res.steps) res.steps = [];
+    setResult(res);
+  }
+
+  const allUnits = ['mcg/kg/min','mcg/min','mg/min','mg/h','mg/kg','mcg/kg','units/min'];
+  const needsConc = ['mcg/kg/min','mcg/min','mg/min','mg/h'].includes(doseUnit);
+
+  return(
+    <div style={{
+      width:'100vw',height:'100svh',background:'#050d1a',
+      display:'flex',flexDirection:'column',overflow:'hidden'
+    }}>
+      {/* Header */}
+      <div style={{
+        display:'flex',alignItems:'center',justifyContent:'space-between',
+        padding:'10px 16px',borderBottom:'1px solid #1a2a3a',
+        background:'#071020'
+      }}>
+        <button className="btn-home" onClick={onHome}>🏠 Home</button>
+        <div style={{fontFamily:"'Rajdhani',sans-serif",fontWeight:700,fontSize:'1rem',
+          color:'#88ccff',letterSpacing:'2px',textTransform:'uppercase'}}>
+          💊 Drug Dose Calculator
+        </div>
+        <div style={{width:60}}/>
+      </div>
+
+      <div style={{flex:1,display:'flex',overflow:'hidden'}}>
+        {/* Drug list */}
+        <div style={{
+          width:'140px',borderRight:'1px solid #1a2a3a',
+          overflowY:'auto',padding:'6px 4px',
+          display:'flex',flexDirection:'column',gap:'3px'
+        }}>
+          {DRUGS.map(drug=>(
+            <button key={drug.name}
+              onClick={()=>setSelectedDrug(drug)}
+              style={{
+                width:'100%',padding:'7px 5px',border:'none',borderRadius:'5px',
+                background:selectedDrug.name===drug.name?'rgba(42,106,176,0.3)':'transparent',
+                borderLeft:`3px solid ${selectedDrug.name===drug.name?drug.color:'transparent'}`,
+                color:selectedDrug.name===drug.name?drug.color:'#6a8fa8',
+                fontFamily:"'Rajdhani',sans-serif",fontSize:'0.78rem',
+                fontWeight:700,cursor:'pointer',textAlign:'left',
+                letterSpacing:'0.5px',transition:'all 0.15s'
+              }}>
+              {drug.name}
+              <div style={{fontSize:'0.6rem',color:'#3a5a6a',fontWeight:400,marginTop:'1px'}}>{drug.category}</div>
+            </button>
+          ))}
+        </div>
+
+        {/* Calculator */}
+        <div style={{flex:1,overflowY:'auto',padding:'12px 14px',display:'flex',flexDirection:'column',gap:'10px'}}>
+          
+          {/* Drug header */}
+          <div style={{
+            background:'rgba(42,106,176,0.1)',border:`1px solid ${selectedDrug.color}33`,
+            borderLeft:`4px solid ${selectedDrug.color}`,borderRadius:'6px',padding:'8px 12px'
+          }}>
+            <div style={{fontFamily:"'Rajdhani',sans-serif",fontSize:'1.1rem',fontWeight:700,
+              color:selectedDrug.color,letterSpacing:'1px'}}>{selectedDrug.name}</div>
+          </div>
+
+          {/* Weight */}
+          <div>
+            <div style={{fontSize:'0.7rem',color:'#5a8fa8',letterSpacing:'1px',textTransform:'uppercase',marginBottom:'4px'}}>Patient Weight</div>
+            <div style={{display:'flex',gap:'6px'}}>
+              <input value={weight} onChange={e=>setWeight(e.target.value)}
+                placeholder="Enter weight"
+                style={{flex:1,padding:'8px 10px',background:'#0d1f33',border:'1px solid #2a3a4a',
+                  borderRadius:'6px',color:'#fff',fontFamily:"'Share Tech Mono',monospace",
+                  fontSize:'1rem',outline:'none'}}/>
+              <div style={{display:'flex',borderRadius:'6px',overflow:'hidden',border:'1px solid #2a3a4a'}}>
+                {['kg','lb'].map(u=>(
+                  <button key={u} onClick={()=>setWeightUnit(u)}
+                    style={{padding:'8px 12px',border:'none',cursor:'pointer',
+                      background:weightUnit===u?'#1a4a7a':'#0d1f33',
+                      color:weightUnit===u?'#88ccff':'#4a6a8a',
+                      fontFamily:"'Rajdhani',sans-serif",fontWeight:700,fontSize:'0.85rem'}}>
+                    {u}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Dose + Unit */}
+          <div>
+            <div style={{fontSize:'0.7rem',color:'#5a8fa8',letterSpacing:'1px',textTransform:'uppercase',marginBottom:'4px'}}>Ordered Dose</div>
+            <div style={{display:'flex',gap:'6px'}}>
+              <input value={dose} onChange={e=>setDose(e.target.value)}
+                placeholder="Enter dose"
+                style={{flex:1,padding:'8px 10px',background:'#0d1f33',border:'1px solid #2a3a4a',
+                  borderRadius:'6px',color:'#fff',fontFamily:"'Share Tech Mono',monospace",
+                  fontSize:'1rem',outline:'none'}}/>
+              <select value={doseUnit} onChange={e=>setDoseUnit(e.target.value)}
+                style={{padding:'8px 6px',background:'#0d1f33',border:'1px solid #2a3a4a',
+                  borderRadius:'6px',color:'#88ccff',fontFamily:"'Rajdhani',sans-serif",
+                  fontWeight:700,fontSize:'0.78rem',outline:'none',cursor:'pointer'}}>
+                {allUnits.map(u=><option key={u} value={u}>{u}</option>)}
+              </select>
+            </div>
+          </div>
+
+          {/* Concentration — only if infusion */}
+          {needsConc&&(
+            <div>
+              <div style={{fontSize:'0.7rem',color:'#5a8fa8',letterSpacing:'1px',textTransform:'uppercase',marginBottom:'4px'}}>Drug Concentration (Bag)</div>
+              <div style={{display:'flex',gap:'6px',alignItems:'center'}}>
+                <input value={drugAmt} onChange={e=>setDrugAmt(e.target.value)}
+                  placeholder="Drug amount"
+                  style={{flex:1,padding:'8px 10px',background:'#0d1f33',border:'1px solid #2a3a4a',
+                    borderRadius:'6px',color:'#fff',fontFamily:"'Share Tech Mono',monospace",
+                    fontSize:'1rem',outline:'none'}}/>
+                <select value={concUnit} onChange={e=>setConcUnit(e.target.value)}
+                  style={{padding:'8px 4px',background:'#0d1f33',border:'1px solid #2a3a4a',
+                    borderRadius:'6px',color:'#88ccff',fontFamily:"'Rajdhani',sans-serif",
+                    fontWeight:700,fontSize:'0.78rem',outline:'none',cursor:'pointer'}}>
+                  {['mcg','mg','g','units'].map(u=><option key={u} value={u}>{u}</option>)}
+                </select>
+                <span style={{color:'#3a5a6a',fontFamily:"'Rajdhani',sans-serif",fontWeight:700}}>in</span>
+                <input value={volAmt} onChange={e=>setVolAmt(e.target.value)}
+                  placeholder="mL"
+                  style={{width:'70px',padding:'8px 10px',background:'#0d1f33',border:'1px solid #2a3a4a',
+                    borderRadius:'6px',color:'#fff',fontFamily:"'Share Tech Mono',monospace",
+                    fontSize:'1rem',outline:'none'}}/>
+                <span style={{color:'#3a5a6a',fontFamily:"'Rajdhani',sans-serif",fontWeight:700}}>mL</span>
+              </div>
+            </div>
+          )}
+
+          {/* Calculate button */}
+          <button onClick={calculate}
+            style={{width:'100%',padding:'12px',border:'none',borderRadius:'8px',
+              background:selectedDrug.color,color:'#000',
+              fontFamily:"'Rajdhani',sans-serif",fontSize:'1rem',fontWeight:700,
+              cursor:'pointer',letterSpacing:'2px',textTransform:'uppercase'}}>
+            Calculate
+          </button>
+
+          {/* Error */}
+          {error&&<div style={{color:'#ff4444',fontSize:'0.85rem',textAlign:'center'}}>{error}</div>}
+
+          {/* Result */}
+          {result&&(
+            <div style={{
+              background:'rgba(0,200,100,0.08)',border:'2px solid #00cc66',
+              borderRadius:'8px',padding:'12px'
+            }}>
+              <div style={{fontSize:'0.7rem',color:'#00aa55',letterSpacing:'2px',textTransform:'uppercase',marginBottom:'4px'}}>{result.label}</div>
+              <div style={{fontFamily:"'Share Tech Mono',monospace",fontSize:'1.8rem',color:'#00ff7f',fontWeight:700,marginBottom:'8px'}}>{result.main}</div>
+              <div style={{borderTop:'1px solid #1a4a2a',paddingTop:'8px',display:'flex',flexDirection:'column',gap:'4px'}}>
+                {(result.steps||[]).map((s,i)=>(
+                  <div key={i} style={{fontSize:'0.75rem',color:'#4a8a6a',fontFamily:"'Share Tech Mono',monospace"}}>{s}</div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Indications */}
+          {selectedDrug.indications&&(
+          <div style={{background:'rgba(0,200,100,0.05)',border:'1px solid #1a4a2a',borderRadius:'6px',padding:'8px 10px',marginTop:'2px'}}>
+            <div style={{fontSize:'0.65rem',color:'#00aa55',letterSpacing:'1px',textTransform:'uppercase',marginBottom:'3px'}}>✅ Indications (ALS PCS)</div>
+            <div style={{fontSize:'0.75rem',color:'#5a8a6a',lineHeight:1.5}}>{selectedDrug.indications}</div>
+          </div>
+          )}
+          {/* Conditions */}
+          {selectedDrug.conditions&&(
+          <div style={{background:'rgba(100,150,255,0.05)',border:'1px solid #1a2a4a',borderRadius:'6px',padding:'8px 10px',marginTop:'4px'}}>
+            <div style={{fontSize:'0.65rem',color:'#6688cc',letterSpacing:'1px',textTransform:'uppercase',marginBottom:'3px'}}>📋 Conditions</div>
+            <div style={{fontSize:'0.75rem',color:'#5a6a8a',lineHeight:1.5}}>{selectedDrug.conditions}</div>
+          </div>
+          )}
+          {/* Contraindications */}
+          {selectedDrug.contraindications&&(
+          <div style={{background:'rgba(255,50,50,0.05)',border:'1px solid #4a1a1a',borderRadius:'6px',padding:'8px 10px',marginTop:'4px'}}>
+            <div style={{fontSize:'0.65rem',color:'#cc4444',letterSpacing:'1px',textTransform:'uppercase',marginBottom:'3px'}}>🚫 Contraindications</div>
+            <div style={{fontSize:'0.75rem',color:'#8a5a5a',lineHeight:1.5}}>{selectedDrug.contraindications}</div>
+          </div>
+          )}
+
+
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function App(){
+  const [session,setSession]=useState(null);
+  if(!session) return <Welcome onStart={setSession}/>;
+  if(session.mode==='cpr') return <CPRMonitor session={session} onHome={()=>setSession(null)}/>;
+  if(session.mode==='student-cpr') return <CPRStudentView data={session.data} roomCode={session.roomCode} onHome={()=>setSession(null)}/>;
+  if(session.mode==='drug') return <DrugCalculator onHome={()=>setSession(null)}/>;
+  return <Monitor session={session} onHome={()=>setSession(null)}/>;
+}
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+
+
+</body>
+</html>
